@@ -20,4 +20,4 @@ To ensure professional-grade accuracy, the pipeline follows these steps:
 - Color Profiling: Converts crops to RGB and uses K-Means clustering to identify the dominant jersey color, ignoring pitch green.
 - Tracking: Assigns a unique tracker_id to each player. This ID is mapped to a team color once to ensure visual consistency throughout the video.
 
-LicenseThis project is licensed under the Apache 2.0 License - see the LICENSE file for details.
+LicenseThis project is licensed under the MIT License - see the LICENSE file for details.
