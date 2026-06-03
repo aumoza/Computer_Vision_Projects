@@ -1,18 +1,27 @@
 from ultralytics import YOLO
+import torch
 
 def detection_worker(in_queue, out_queue):
-    model = YOLO('yolov8n.pt')
-    print("Detection Node Initialized.")
+    # CUDA Context gets initialized cleanly inside the child process
+    model = YOLO('yolov8s.pt').to('cuda')
+    print(f"Detection Node Initialized on: {torch.cuda.get_device_name(0)}")
 
     while True:
         frame = in_queue.get()
         if frame is None: 
-            out_queue.put(None) # Pass the end signal!
+            out_queue.put(None)
             break 
-
-        results = model.track(frame, imgsz=1280,persist=True, classes=[0], verbose=False)
         
-        # We pass the results as they are. 
-        # Note: If you want to use the color in Analytics, 
-        # you should ideally calculate it there or pass it in a custom dict.
-        out_queue.put((frame, results))
+        # YOLO runs tracking directly on the shared GPU memory frame
+        results = model.track(
+            frame, 
+            imgsz=640, # Match video_node resize dimensions for optimal performance
+            device='cuda', 
+            half=True, 
+            persist=True, 
+            verbose=False
+        )
+        
+        # We pass the frame and results. Results contain CPU bounding-box pointers
+        frame_ipc = frame.clone() # Clone again to ensure clean GPU memory for IPC
+        out_queue.put((frame_ipc, results))
